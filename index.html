@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Man o´ War - Bienvenida</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script type="module" src="firebase-config.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Man o´ War</h1>
+    </header>
+    <main>
+        <section class="products-section">
+            <h2>Productos Disponibles</h2>
+            <div id="productsList"></div>
+        </section>
+        <div style="text-align:center; margin-top:2rem;">
+            <a href="crud.html" class="crud-btn">Ir al Sistema CRUD</a>
+        </div>
+    </main>
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+        const productsList = document.getElementById('productsList');
+        function renderProducts(snapshot) {
+            productsList.innerHTML = '';
+            if (snapshot.empty) {
+                productsList.innerHTML = '<p>No hay productos disponibles.</p>';
+                return;
+            }
+            snapshot.forEach(doc => {
+                const product = doc.data();
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                productDiv.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p><strong>Precio:</strong> $${parseFloat(product.price).toFixed(2)}</p>
+                    <p>${product.description}</p>
+                    ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.name}" style="max-width: 200px; border-radius: 8px; margin-top: 0.5rem;">` : ''}
+                `;
+                productsList.appendChild(productDiv);
+            });
+        }
+        onSnapshot(collection(db, 'products'), (querySnapshot) => {
+            renderProducts(querySnapshot);
+        });
+    </script>
+</body>
+</html>

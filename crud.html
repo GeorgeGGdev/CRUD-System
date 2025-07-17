@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Man o´ War - Sistema CRUD</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script type="module" src="firebase-config.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Man o´ War</h1>
+    </header>
+    <main>
+        <section class="form-section">
+            <h2>Añadir Producto</h2>
+            <form id="productForm">
+                <label for="name">Nombre:</label>
+                <input type="text" id="name" name="name" required>
+
+                <label for="price">Precio original:</label>
+                <input type="number" id="price" name="price" min="0" step="0.01" required>
+
+                <label for="description">Descripción:</label>
+                <textarea id="description" name="description" required></textarea>
+
+                <button type="submit">Agregar Producto</button>
+            </form>
+        </section>
+        <section class="products-section">
+            <h2>Mis Productos</h2>
+            <div id="productsList"></div>
+        </section>
+        <div style="text-align:center; margin-top:2rem;">
+            <a href="index.html" class="crud-btn">Volver a la Bienvenida</a>
+        </div>
+    </main>
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+        const form = document.getElementById('productForm');
+        const productsList = document.getElementById('productsList');
+
+        // Mostrar productos en tiempo real
+        function renderProducts(snapshot) {
+            productsList.innerHTML = '';
+            if (snapshot.empty) {
+                productsList.innerHTML = '<p>No hay productos añadidos.</p>';
+                return;
+            }
+            snapshot.forEach(doc => {
+                const product = doc.data();
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                productDiv.innerHTML = `
+                    <h3>${product.name}</h3>
+                    <p><strong>Precio:</strong> $${parseFloat(product.price).toFixed(2)}</p>
+                    <p>${product.description}</p>
+                    ${product.imageUrl ? `<img src="${product.imageUrl}" alt="${product.name}" style="max-width: 200px; border-radius: 8px; margin-top: 0.5rem;">` : ''}
+                `;
+                productsList.appendChild(productDiv);
+            });
+        }
+
+        // Escuchar cambios en la colección 'products'
+        onSnapshot(collection(db, 'products'), (querySnapshot) => {
+            renderProducts(querySnapshot);
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = form.name.value.trim();
+            const price = form.price.value;
+            const description = form.description.value.trim();
+            if (!name || !price || !description) return;
+            await addDoc(collection(db, 'products'), {
+                name,
+                price,
+                description
+            });
+            form.reset();
+        });
+    </script>
+</body>
+</html> 
